@@ -16,6 +16,12 @@ type Log struct {
 // Level variable using for checking before launch debug and trace
 var Level int = 6
 
+func (l *Log) New() {
+	if err := New(&Log{LogLevel: Level}); err != nil {
+		panic(err)
+	}
+}
+
 // New() Initializing log io writer
 func New(c *Log) error {
 	// Default destinations for logging
