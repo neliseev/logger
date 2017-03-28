@@ -1,16 +1,16 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"os"
-	"fmt"
 	"time"
 )
 
 // Exporting to core/cfg
 type Log struct {
-	LogFile   string
-	LogLevel  int
+	LogFile  string
+	LogLevel int
 }
 
 // Level variable using for checking before launch debug and trace
@@ -26,15 +26,15 @@ func (l *Log) New() {
 func New(c *Log) error {
 	// Default destinations for logging
 	dest := [9]io.Writer{
-		os.Stderr,  // Emerg
-		os.Stderr,  // Alert
-		os.Stderr,  // Crit
-		os.Stderr,  // Err
-		os.Stdout,  // Warn
-		os.Stdout,  // Notice
-		os.Stdout,  // Info
-		os.Stdout,  // Debug
-		os.Stdout,  // Trace
+		os.Stderr, // Emerg
+		os.Stderr, // Alert
+		os.Stderr, // Crit
+		os.Stderr, // Err
+		os.Stdout, // Warn
+		os.Stdout, // Notice
+		os.Stdout, // Info
+		os.Stdout, // Debug
+		os.Stdout, // Trace
 	}
 
 	// Change default destination to file if in config defined
@@ -42,7 +42,7 @@ func New(c *Log) error {
 		for i := range dest {
 			dest[i] = fh
 		}
-	// If log file undefined in config, logger will write all into STDOUT/STDERR
+		// If log file undefined in config, logger will write all into STDOUT/STDERR
 	} else if err != nil && c.LogFile != "" {
 		logHandler(dest)
 

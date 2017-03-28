@@ -1,9 +1,9 @@
 package logger
 
 import (
-	"os"
 	"io"
 	"io/ioutil"
+	"os"
 )
 
 // Open log file and return pointer to FH
@@ -19,7 +19,7 @@ func logOpenFile(logFile string) (fh *os.File, err error) {
 
 // Discard logging destination for reducing log level
 func logDiscard(level int, dest [9]io.Writer) [9]io.Writer {
-	for ;level < len(dest); level++ {
+	for ; level < len(dest); level++ {
 		dest[level] = ioutil.Discard
 	}
 
