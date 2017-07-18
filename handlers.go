@@ -5,15 +5,15 @@ import (
 	"log"
 )
 
-var emergPtr *log.Logger  // Level 0
-var alertPtr *log.Logger  // Level 1
-var critPtr *log.Logger   // Level 2
-var errorPtr *log.Logger  // Level 3
-var warnPtr *log.Logger   // Level 4
-var noticePtr *log.Logger // Level 5
-var infoPtr *log.Logger   // Level 6
-var DebugPtr *log.Logger  // Level 7
-var TracePtr *log.Logger  // Trace 8
+var emergPtr *log.Logger
+var alertPtr *log.Logger
+var critPtr *log.Logger
+var errorPtr *log.Logger
+var warnPtr *log.Logger
+var noticePtr *log.Logger
+var infoPtr *log.Logger
+var DebugPtr *log.Logger
+var TracePtr *log.Logger
 
 // Create new copy of *log for each Level
 func logHandler(h [9]io.Writer) {

@@ -1,4 +1,4 @@
-// Logger - implement log subsystem
+// Package logger - implement log subsystem
 // Usage:
 //   import logger
 //
