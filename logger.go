@@ -5,189 +5,138 @@ import (
 	"io"
 	"os"
 	"time"
+	"log"
+	"io/ioutil"
 )
 
-// Level variable using for checking before launch debug and trace
-var Level int = 6
+var level int
 
-// Params - parameters struct.
-//
-// Fields:
-//   LogFile  - path to log file
-//   LogLevel - log level, possible levels:
-//     0 - Emergency, with panic exit.
-//     1 - Alert, with exit 2.
-//     2 - Critical, with ext 1.
-//     3 - Errors.
-//     4 - Warnings.
-//     5 - Notice.
-//     6 - Info.
-//     7 - Debug.
-//     8 - Trace.
-type Params struct {
-	LogFile  string
-	LogLevel int
+var emergPtr *log.Logger
+var alertPtr *log.Logger
+var critPtr *log.Logger
+var errorPtr *log.Logger
+var warnPtr *log.Logger
+var noticePtr *log.Logger
+var infoPtr *log.Logger
+var DebugPtr *log.Logger
+var TracePtr *log.Logger
+
+func defaultHandler(h [9]io.Writer) {
+	emergPtr = log.New(h[0], "Emergency: ", log.Ldate|log.Ltime|log.Lshortfile)
+	alertPtr = log.New(h[1], "Alert: ", log.Ldate|log.Ltime|log.Lshortfile)
+	critPtr = log.New(h[2], "Critical: ", log.Ldate|log.Ltime|log.Lshortfile)
+	errorPtr = log.New(h[3], "Error: ", log.Ldate|log.Ltime|log.Lshortfile)
+	warnPtr = log.New(h[4], "Warning: ", log.Ldate|log.Ltime)
+	noticePtr = log.New(h[5], "Notice: ", log.Ldate|log.Ltime)
+	infoPtr = log.New(h[6], "Info: ", log.Ldate|log.Ltime)
+	DebugPtr = log.New(h[7], "Debug: ", log.Ldate|log.Ltime|log.Lshortfile)
+	TracePtr = log.New(h[8], "Trace: ", log.Ldate|log.Ltime|log.Lshortfile)
 }
 
-func (p *Params) InitLogger() {
-	if err := NewLogger(&Params{LogLevel: Level}); err != nil {
-		panic(err)
+// logDiscard func - discard logging destination for reducing log level.
+func discardLevel(level int, dest [9]io.Writer) [9]io.Writer {
+	for ; level < len(dest); level++ {
+		dest[level] = ioutil.Discard
 	}
+
+	return dest
 }
 
-// NewLogger() - creating new logger.
-func NewLogger(p *Params) error {
-	// Default destinations for logging
-	dest := [9]io.Writer{
-		os.Stderr, // Emerg
-		os.Stderr, // Alert
-		os.Stderr, // Crit
-		os.Stderr, // Err
-		os.Stdout, // Warn
-		os.Stdout, // Notice
-		os.Stdout, // Info
-		os.Stdout, // Debug
-		os.Stdout, // Trace
-	}
-
-	// Change default destination to file if in config defined
-	if fh, err := logOpenFile(p.LogFile); fh != nil {
-		for i := range dest {
-			dest[i] = fh
-		}
-		// If log file undefined in config, logger will write all into STDOUT/STDERR
-	} else if err != nil && p.LogFile != "" {
-		logHandler(dest)
-
-		return err
-	}
-
-	// Reduce log level
-	switch p.LogLevel {
-	case 8:
-		dest = logDiscard(9, dest)
-	case 7:
-		dest = logDiscard(8, dest)
-	case 6:
-		dest = logDiscard(7, dest)
-	case 5:
-		dest = logDiscard(6, dest)
-	case 4:
-		dest = logDiscard(5, dest)
-	case 3:
-		dest = logDiscard(4, dest)
-	case 2:
-		dest = logDiscard(3, dest)
-	case 1:
-		dest = logDiscard(2, dest)
-	case 0:
-		dest = logDiscard(1, dest)
-	default:
-		logHandler(dest)
-
-		l := new(Params)
-		l.Critf("Incorrect log level in config file, defined: %v, possible 0-8", p.LogLevel)
-	}
-
-	// Init log.Logger for each Level
-	logHandler(dest)
-
-	return nil
-}
+type Log struct {}
 
 // Emerg logging a message using Emerg (0) as log level and call panic(fmt string).
-func (p *Params) Emerg(args ...interface{}) {
+func (*Log) Emerg(args ...interface{}) {
 	s := emergPtr.Output(2, fmt.Sprintln(args...))
 	panic(s)
 }
 
 // Emergf logging a message using Emerg (0) as log level and call panic(fmt string).
-func (p *Params) Emergf(format string, args ...interface{}) {
+func (*Log) Emergf(format string, args ...interface{}) {
 	s := emergPtr.Output(2, fmt.Sprintf(format, args...))
 	panic(s)
 }
 
 // Alert logging a message using Alert (1) as log level and call os.Exit(1).
-func (p *Params) Alert(args ...interface{}) {
+func (*Log) Alert(args ...interface{}) {
 	alertPtr.Output(2, fmt.Sprintln(args...))
 	os.Exit(2)
 }
 
 // Alertf logging a message using Alert (1) as log level and call os.Exit(1).
-func (p *Params) Alertf(format string, args ...interface{}) {
+func (*Log) Alertf(format string, args ...interface{}) {
 	alertPtr.Output(2, fmt.Sprintf(format, args...))
 	os.Exit(1)
 }
 
 // Crit logging a message using Crit (2) as log level and call os.Exit(1).
-func (p *Params) Crit(args ...interface{}) {
+func (*Log) Crit(args ...interface{}) {
 	critPtr.Output(2, fmt.Sprintln(args...))
 	os.Exit(1)
 }
 
 // Critf logging a message using Crit (2) as log level and call os.Exit(1).
-func (p *Params) Critf(format string, args ...interface{}) {
+func (*Log) Critf(format string, args ...interface{}) {
 	critPtr.Output(2, fmt.Sprintf(format, args...))
 	os.Exit(1)
 }
 
 // Err logging a message using Error (3) as log level.
-func (p *Params) Err(args ...interface{}) {
+func (*Log) Err(args ...interface{}) {
 	errorPtr.Output(2, fmt.Sprintln(args...))
 }
 
 // Errf logging a message using Error (3) as log level.
-func (p *Params) Errf(format string, args ...interface{}) {
+func (*Log) Errf(format string, args ...interface{}) {
 	errorPtr.Output(2, fmt.Sprintf(format, args...))
 }
 
 // Warn logging a message using Warn (4) as log level.
-func (p *Params) Warn(args ...interface{}) {
+func (*Log) Warn(args ...interface{}) {
 	warnPtr.Println(args)
 }
 
 // Warnf logging a message using Warn (4) as log level.
-func (p *Params) Warnf(format string, args ...interface{}) {
+func (*Log) Warnf(format string, args ...interface{}) {
 	warnPtr.Printf(format, args...)
 }
 
 // Notice logging a message using Notice (5) as log level.
-func (p *Params) Notice(args ...interface{}) {
+func (*Log) Notice(args ...interface{}) {
 	noticePtr.Println(args)
 }
 
 // Noticef logging a message using Notice (5) as log level.
-func (p *Params) Noticef(format string, args ...interface{}) {
+func (*Log) Noticef(format string, args ...interface{}) {
 	noticePtr.Printf(format, args...)
 }
 
 // Info logging a message using Info (6) as log level.
-func (p *Params) Info(args ...interface{}) {
+func (*Log) Info(args ...interface{}) {
 	infoPtr.Println(args)
 }
 
 // Infof logging a message using Info (6) as log level.
-func (p *Params) Infof(format string, args ...interface{}) {
+func (*Log) Infof(format string, args ...interface{}) {
 	infoPtr.Printf(format, args...)
 }
 
 // Debug logging a message using DEBUG as log level.
-func (p *Params) Debug(args ...interface{}) {
-	if Level >= 7 {
+func (l *Log) Debug(args ...interface{}) {
+	if level >= 7 {
 		DebugPtr.Output(2, fmt.Sprintln(args...))
 	}
 }
 
 // Debugf logging a message using DEBUG as log level.
-func (p *Params) Debugf(format string, args ...interface{}) {
-	if Level >= 7 {
+func (l *Log) Debugf(format string, args ...interface{}) {
+	if level >= 7 {
 		DebugPtr.Output(2, fmt.Sprintf(format, args...))
 	}
 }
 
 // Trace logging a performance each function, usage defer trace("Message")()
-func (p *Params) Trace(msg string) func() {
-	if Level == 8 {
+func (l *Log) Trace(msg string) func() {
+	if level == 8 {
 		start := time.Now()
 		TracePtr.Output(2, fmt.Sprintf("Start: %s", msg))
 
@@ -198,3 +147,25 @@ func (p *Params) Trace(msg string) func() {
 
 	return func() {}
 }
+
+/*
+  Copyright (C) 2017 Nikita Eliseev <n.eliseev@gmail.com>
+
+  The MIT License (MIT)
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+  and associated documentation files (the "Software"), to deal in the Software without restriction,
+  including without limitation the rights to use, copy, modify, merge, publish, distribute,
+  sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or substantial
+  portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+  PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
+  THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
