@@ -44,7 +44,7 @@ func Some() {
 ```
 
 #### License
-Copyright (C) 2017 Nikita Eliseev <n.eliseev@gmail.com>
+Copyright (C) 2017 Nikita Eliseev
 
 The MIT License (MIT)
 
