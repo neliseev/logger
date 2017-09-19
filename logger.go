@@ -3,10 +3,10 @@ package logger
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"os"
 	"time"
-	"log"
-	"io/ioutil"
 )
 
 var level int
@@ -42,7 +42,7 @@ func discardLevel(level int, dest [9]io.Writer) [9]io.Writer {
 	return dest
 }
 
-type Log struct {}
+type Log struct{}
 
 // Emerg logging a message using Emerg (0) as log level and call panic(fmt string).
 func (*Log) Emerg(args ...interface{}) {

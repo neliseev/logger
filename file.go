@@ -21,6 +21,18 @@ import (
 //     6 - Info.
 //     7 - Debug.
 //     8 - Trace.
+//
+// Example, for reusing current pointer to this logger, just define in package var log *logger.Log:
+// var log *logger.Log // Using log subsystem
+//
+// func init() {
+//   // Initialization log system
+//   var err error
+//
+//   if log, err = logger.NewFileLogger(environment.GetLogFile(), environment.GetLogLevel()); err != nil {
+//     panic(err)
+//   }
+//}
 func NewFileLogger(logFile string, logLevel int) (*Log, error) {
 	if logLevel > 8 {
 		return nil, fmt.Errorf("incorrect log level, should be from 0 to 8, got: %v", logLevel)
