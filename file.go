@@ -91,12 +91,14 @@ func NewFileLogger(logFile string, logLevel int) (*Log, error) {
 }
 
 // openLogFile - creating if file not exist and opening it for writes.
-func openLogFile(logFile string) (*os.File, error) {
-	if err := os.MkdirAll(path.Dir(logFile), 0755); err != nil {
+func openLogFile(logFile string) (fh *os.File, err error) {
+	defer fh.Close()
+
+	if err = os.MkdirAll(path.Dir(logFile), 0755); err != nil {
 		return nil, err
 	}
 
-	fh, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0640)
+	fh, err = os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0640)
 	if err != nil {
 		return nil, err
 	}
