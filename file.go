@@ -102,7 +102,6 @@ func openLogFile(logFile string) (fh *os.File, err error) {
 	if err != nil {
 		return nil, err
 	}
-	defer fh.Close()
 
 	return fh, nil
 }
