@@ -45,92 +45,173 @@ func discardLevel(level int, dest [9]io.Writer) [9]io.Writer {
 type Log struct{}
 
 // Emerg logging a message using Emerg (0) as log level and call panic(fmt string).
-func (*Log) Emerg(args ...interface{}) {
-	s := emergPtr.Output(2, fmt.Sprintln(args...))
+func (*Log) Emerg(a ...interface{}) {
+	s := emergPtr.Output(2, fmt.Sprintln(a...))
 	panic(s)
+}
+
+func (l *Log) EmergOnErr(err error, a ...interface{}) {
+	if err != nil {
+		a = append(a, err)
+		s := emergPtr.Output(2, fmt.Sprintln(a...))
+		panic(s)
+	}
 }
 
 // Emergf logging a message using Emerg (0) as log level and call panic(fmt string).
-func (*Log) Emergf(format string, args ...interface{}) {
-	s := emergPtr.Output(2, fmt.Sprintf(format, args...))
+func (*Log) Emergf(format string, a ...interface{}) {
+	s := emergPtr.Output(2, fmt.Sprintf(format, a...))
 	panic(s)
 }
 
+func (l *Log) EmergfOnErr(err error, format string, a ...interface{}) {
+	if err != nil {
+		format += ": %v"
+		a = append(a, err)
+		s := emergPtr.Output(2, fmt.Sprintf(format, a...))
+		panic(s)
+	}
+}
+
 // Alert logging a message using Alert (1) as log level and call os.Exit(1).
-func (*Log) Alert(args ...interface{}) {
-	alertPtr.Output(2, fmt.Sprintln(args...))
+func (*Log) Alert(a ...interface{}) {
+	alertPtr.Output(2, fmt.Sprintln(a...))
 	os.Exit(2)
 }
 
+func (l *Log) AlertOnErr(err error, a ...interface{}) {
+	if err != nil {
+		a = append(a, err)
+		alertPtr.Output(2, fmt.Sprintln(a...))
+		os.Exit(2)
+	}
+}
+
 // Alertf logging a message using Alert (1) as log level and call os.Exit(1).
-func (*Log) Alertf(format string, args ...interface{}) {
-	alertPtr.Output(2, fmt.Sprintf(format, args...))
-	os.Exit(1)
+func (*Log) Alertf(format string, a ...interface{}) {
+	alertPtr.Output(2, fmt.Sprintf(format, a...))
+	os.Exit(2)
+}
+
+func (l *Log) AlertfOnErr(err error, format string, a ...interface{}) {
+	if err != nil {
+		format += ": %v"
+		a = append(a, err)
+		alertPtr.Output(2, fmt.Sprintf(format, a...))
+		os.Exit(2)
+	}
 }
 
 // Crit logging a message using Crit (2) as log level and call os.Exit(1).
-func (*Log) Crit(args ...interface{}) {
-	critPtr.Output(2, fmt.Sprintln(args...))
+func (*Log) Crit(a ...interface{}) {
+	critPtr.Output(2, fmt.Sprintln(a...))
 	os.Exit(1)
+}
+
+func (l *Log) CritOnErr(err error, a ...interface{}) {
+	if err != nil {
+		a = append(a, err)
+		critPtr.Output(2, fmt.Sprintln(a...))
+		os.Exit(1)
+	}
 }
 
 // Critf logging a message using Crit (2) as log level and call os.Exit(1).
-func (*Log) Critf(format string, args ...interface{}) {
-	critPtr.Output(2, fmt.Sprintf(format, args...))
+func (*Log) Critf(format string, a ...interface{}) {
+	critPtr.Output(2, fmt.Sprintf(format, a...))
 	os.Exit(1)
 }
 
+func (l *Log) CritfOnErr(err error, format string, a ...interface{}) {
+	if err != nil {
+		format += ": %v"
+		a = append(a, err)
+		critPtr.Output(2, fmt.Sprintln(a...))
+		os.Exit(1)
+	}
+}
+
 // Err logging a message using Error (3) as log level.
-func (*Log) Err(args ...interface{}) {
-	errorPtr.Output(2, fmt.Sprintln(args...))
+func (*Log) Err(a ...interface{}) {
+	errorPtr.Output(2, fmt.Sprintln(a...))
+}
+
+func (l *Log) ErrOnErr(err error, a ...interface{}) {
+	if err != nil {
+		a = append(a, err)
+		errorPtr.Output(2, fmt.Sprintln(a...))
+	}
 }
 
 // Errf logging a message using Error (3) as log level.
-func (*Log) Errf(format string, args ...interface{}) {
-	errorPtr.Output(2, fmt.Sprintf(format, args...))
+func (*Log) Errf(format string, a ...interface{}) {
+	errorPtr.Output(2, fmt.Sprintf(format, a...))
+}
+
+func (l *Log) ErrfOnErr(err error, format string, a ...interface{}) {
+	if err != nil {
+		format += ": %v"
+		a = append(a, err)
+		errorPtr.Output(2, fmt.Sprintf(format, a...))
+	}
 }
 
 // Warn logging a message using Warn (4) as log level.
-func (*Log) Warn(args ...interface{}) {
-	warnPtr.Println(args)
+func (*Log) Warn(a ...interface{}) {
+	warnPtr.Println(a...)
+}
+
+func (l *Log) WarnOnErr(err error, a ...interface{}) {
+	if err != nil {
+		a = append(a, err)
+		warnPtr.Println(a...)
+	}
 }
 
 // Warnf logging a message using Warn (4) as log level.
-func (*Log) Warnf(format string, args ...interface{}) {
-	warnPtr.Printf(format, args...)
+func (*Log) Warnf(format string, a ...interface{}) {
+	warnPtr.Printf(format, a...)
+}
+
+func (l *Log) WarnfOnErr(err error, format string, a ...interface{}) {
+	if err != nil {
+		format += ": %v"
+		a = append(a, err)
+		warnPtr.Printf(format, a...)
+	}
 }
 
 // Notice logging a message using Notice (5) as log level.
-func (*Log) Notice(args ...interface{}) {
-	noticePtr.Println(args)
+func (*Log) Notice(a ...interface{}) {
+	noticePtr.Println(a...)
 }
 
 // Noticef logging a message using Notice (5) as log level.
-func (*Log) Noticef(format string, args ...interface{}) {
-	noticePtr.Printf(format, args...)
+func (*Log) Noticef(format string, a ...interface{}) {
+	noticePtr.Printf(format, a...)
 }
 
 // Info logging a message using Info (6) as log level.
-func (*Log) Info(args ...interface{}) {
-	infoPtr.Println(args)
+func (*Log) Info(a ...interface{}) {
+	infoPtr.Println(a...)
 }
 
 // Infof logging a message using Info (6) as log level.
-func (*Log) Infof(format string, args ...interface{}) {
-	infoPtr.Printf(format, args...)
+func (*Log) Infof(format string, a ...interface{}) {
+	infoPtr.Printf(format, a...)
 }
 
 // Debug logging a message using DEBUG as log level.
-func (l *Log) Debug(args ...interface{}) {
+func (l *Log) Debug(a ...interface{}) {
 	if level >= 7 {
-		DebugPtr.Output(2, fmt.Sprintln(args...))
+		DebugPtr.Output(2, fmt.Sprintln(a...))
 	}
 }
 
 // Debugf logging a message using DEBUG as log level.
-func (l *Log) Debugf(format string, args ...interface{}) {
+func (l *Log) Debugf(format string, a ...interface{}) {
 	if level >= 7 {
-		DebugPtr.Output(2, fmt.Sprintf(format, args...))
+		DebugPtr.Output(2, fmt.Sprintf(format, a...))
 	}
 }
 
