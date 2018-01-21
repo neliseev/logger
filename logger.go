@@ -50,8 +50,8 @@ func (*Log) Emerg(a ...interface{}) {
 	panic(s)
 }
 
-func (l *Log) EmergOnErr(err error, a ...interface{}) {
-	if err != nil {
+func (l *Log) EmergOnErr(fn func() error, a ...interface{}) {
+	if err := fn(); err != nil {
 		a = append(a, err)
 		s := emergPtr.Output(2, fmt.Sprintln(a...))
 		panic(s)
@@ -64,8 +64,8 @@ func (*Log) Emergf(format string, a ...interface{}) {
 	panic(s)
 }
 
-func (l *Log) EmergfOnErr(err error, format string, a ...interface{}) {
-	if err != nil {
+func (l *Log) EmergfOnErr(fn func() error, format string, a ...interface{}) {
+	if err := fn(); err != nil {
 		format += ": %v"
 		a = append(a, err)
 		s := emergPtr.Output(2, fmt.Sprintf(format, a...))
@@ -79,8 +79,8 @@ func (*Log) Alert(a ...interface{}) {
 	os.Exit(2)
 }
 
-func (l *Log) AlertOnErr(err error, a ...interface{}) {
-	if err != nil {
+func (l *Log) AlertOnErr(fn func() error, a ...interface{}) {
+	if err := fn(); err != nil {
 		a = append(a, err)
 		alertPtr.Output(2, fmt.Sprintln(a...))
 		os.Exit(2)
@@ -93,8 +93,8 @@ func (*Log) Alertf(format string, a ...interface{}) {
 	os.Exit(2)
 }
 
-func (l *Log) AlertfOnErr(err error, format string, a ...interface{}) {
-	if err != nil {
+func (l *Log) AlertfOnErr(fn func() error, format string, a ...interface{}) {
+	if err := fn(); err != nil {
 		format += ": %v"
 		a = append(a, err)
 		alertPtr.Output(2, fmt.Sprintf(format, a...))
@@ -108,8 +108,8 @@ func (*Log) Crit(a ...interface{}) {
 	os.Exit(1)
 }
 
-func (l *Log) CritOnErr(err error, a ...interface{}) {
-	if err != nil {
+func (l *Log) CritOnErr(fn func() error, a ...interface{}) {
+	if err := fn(); err != nil {
 		a = append(a, err)
 		critPtr.Output(2, fmt.Sprintln(a...))
 		os.Exit(1)
@@ -122,8 +122,8 @@ func (*Log) Critf(format string, a ...interface{}) {
 	os.Exit(1)
 }
 
-func (l *Log) CritfOnErr(err error, format string, a ...interface{}) {
-	if err != nil {
+func (l *Log) CritfOnErr(fn func() error, format string, a ...interface{}) {
+	if err := fn(); err != nil {
 		format += ": %v"
 		a = append(a, err)
 		critPtr.Output(2, fmt.Sprintln(a...))
@@ -136,8 +136,8 @@ func (*Log) Err(a ...interface{}) {
 	errorPtr.Output(2, fmt.Sprintln(a...))
 }
 
-func (l *Log) ErrOnErr(err error, a ...interface{}) {
-	if err != nil {
+func (l *Log) ErrOnErr(fn func() error, a ...interface{}) {
+	if err := fn(); err != nil {
 		a = append(a, err)
 		errorPtr.Output(2, fmt.Sprintln(a...))
 	}
@@ -148,8 +148,8 @@ func (*Log) Errf(format string, a ...interface{}) {
 	errorPtr.Output(2, fmt.Sprintf(format, a...))
 }
 
-func (l *Log) ErrfOnErr(err error, format string, a ...interface{}) {
-	if err != nil {
+func (l *Log) ErrfOnErr(fn func() error, format string, a ...interface{}) {
+	if err := fn(); err != nil {
 		format += ": %v"
 		a = append(a, err)
 		errorPtr.Output(2, fmt.Sprintf(format, a...))
@@ -161,8 +161,8 @@ func (*Log) Warn(a ...interface{}) {
 	warnPtr.Println(a...)
 }
 
-func (l *Log) WarnOnErr(err error, a ...interface{}) {
-	if err != nil {
+func (l *Log) WarnOnErr(fn func() error, a ...interface{}) {
+	if err := fn(); err != nil {
 		a = append(a, err)
 		warnPtr.Println(a...)
 	}
@@ -173,8 +173,8 @@ func (*Log) Warnf(format string, a ...interface{}) {
 	warnPtr.Printf(format, a...)
 }
 
-func (l *Log) WarnfOnErr(err error, format string, a ...interface{}) {
-	if err != nil {
+func (l *Log) WarnfOnErr(fn func() error, format string, a ...interface{}) {
+	if err := fn(); err != nil {
 		format += ": %v"
 		a = append(a, err)
 		warnPtr.Printf(format, a...)
