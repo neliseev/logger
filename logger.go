@@ -173,7 +173,7 @@ func (log *Log) println(level int, a ...interface{}) {
 // PrintlnOnErr is a function wrap helper;
 // it takes a function that can return an error and additional error description
 // if wrapped function return an error we write a message describes event
-// and handle behavior accodring to specified logging level further
+// and handle behavior according to specified logging level further
 func (log *Log) PrintlnOnErr(level int, fn func() error, a ...interface{}) {
 	err := fn()
 	if err == nil { // all is ok
@@ -187,7 +187,7 @@ func (log *Log) PrintlnOnErr(level int, fn func() error, a ...interface{}) {
 // PrintfOnErr is a function wrap helper;
 // it takes a function that can return an error and additional error description
 // if wrapped function return an error we write a message describes event
-// and handle behavior accodring to specified logging level further
+// and handle behavior according to specified logging level further
 func (log *Log) PrintfOnErr(level int, fn func() error, format string, a ...interface{}) {
 	err := fn()
 	if err == nil { // all is ok
@@ -201,7 +201,7 @@ func (log *Log) PrintfOnErr(level int, fn func() error, format string, a ...inte
 
 // Trace logging a performance each function (simple profiler), usage defer trace("Message")()
 func (log *Log) Trace(msg string) func() {
-	if log.level < TRACE { // supress event
+	if log.level < TRACE { // suppress event
 		return func() {}
 	}
 
@@ -221,7 +221,7 @@ func (log *Log) GetPtr(level int) (*log.Logger, error) {
 	if level < EMERGENCY || level > TRACE {
 		level = INFO // use INFO as default fallback
 	}
-	if level > log.level { // supress event
+	if level > log.level { // suppress event
 		return nil, fmt.Errorf("current loglevel: %d, got: %d", log.level, level)
 	}
 	return log.d[level], nil
