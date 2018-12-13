@@ -54,7 +54,8 @@ type Log struct {
 //     panic(err)
 //   }
 // }
-func New(filePath string, level int) (Log, error) {
+func New(cfg Configurer) (Log, error) {
+	level := cfg.LogLevelValue()
 	if level > 8 { // validate func parameter
 		return Log{}, fmt.Errorf("incorrect log level, should be from 0 to 8, got: %v", level)
 	}
@@ -65,6 +66,7 @@ func New(filePath string, level int) (Log, error) {
 		fd                *os.File
 	)
 
+	filePath := cfg.LogFileValue()
 	if filePath == "" { // default destinations for logging; write to std out/err
 		logDestination = os.Stdout
 		logDestinationErr = os.Stderr
@@ -91,15 +93,15 @@ func New(filePath string, level int) (Log, error) {
 		fd:    fd,
 		level: level,
 		d: map[int]*log.Logger{
-			EMERGENCY: log.New(logDestinationErr, "Emergency: ", log.Ldate|log.Ltime|log.Lshortfile),
-			ALERT:     log.New(logDestinationErr, "Alert: ", log.Ldate|log.Ltime|log.Lshortfile),
-			CRITICAL:  log.New(logDestinationErr, "Critical: ", log.Ldate|log.Ltime|log.Lshortfile),
-			ERROR:     log.New(logDestinationErr, "Error: ", log.Ldate|log.Ltime|log.Lshortfile),
+			EMERGENCY: log.New(logDestinationErr, "Emergency: ", log.Ldate|log.Ltime),
+			ALERT:     log.New(logDestinationErr, "Alert: ", log.Ldate|log.Ltime),
+			CRITICAL:  log.New(logDestinationErr, "Critical: ", log.Ldate|log.Ltime),
+			ERROR:     log.New(logDestinationErr, "Error: ", log.Ldate|log.Ltime),
 			WARNING:   log.New(logDestination, "Warning: ", log.Ldate|log.Ltime),
 			NOTICE:    log.New(logDestination, "Notice: ", log.Ldate|log.Ltime),
 			INFO:      log.New(logDestination, "Info: ", log.Ldate|log.Ltime),
-			DEBUG:     log.New(logDestination, "Debug: ", log.Ldate|log.Ltime|log.Lshortfile),
-			TRACE:     log.New(logDestination, "Trace: ", log.Ldate|log.Ltime|log.Lshortfile),
+			DEBUG:     log.New(logDestination, "Debug: ", log.Ldate|log.Ltime),
+			TRACE:     log.New(logDestination, "Trace: ", log.Ldate|log.Ltime),
 		},
 	}
 
@@ -162,7 +164,7 @@ func (log *Log) println(level int, a ...interface{}) {
 	if level < EMERGENCY || level > TRACE {
 		level = INFO // use INFO as default fallback
 	}
-	if level > log.level { // supress event
+	if level > log.level { // suppress event
 		return
 	}
 	log.d[level].Println(a...) // write message
@@ -170,11 +172,11 @@ func (log *Log) println(level int, a ...interface{}) {
 	log.terminate(level, fmt.Sprintln(a...)) // terminate if needed
 }
 
-// PrintlnOnErr is a function wrap helper;
+// printlnOnError is a function wrap helper;
 // it takes a function that can return an error and additional error description
 // if wrapped function return an error we write a message describes event
-// and handle behavior according to specified logging level further
-func (log *Log) PrintlnOnErr(level int, fn func() error, a ...interface{}) {
+// and handle behavior accodring to specified logging level further
+func (log *Log) printlnOnError(level int, fn func() error, a ...interface{}) {
 	err := fn()
 	if err == nil { // all is ok
 		return
@@ -184,19 +186,14 @@ func (log *Log) PrintlnOnErr(level int, fn func() error, a ...interface{}) {
 	log.println(level, a)
 }
 
-// PrintfOnErr is a function wrap helper;
-// it takes a function that can return an error and additional error description
-// if wrapped function return an error we write a message describes event
-// and handle behavior according to specified logging level further
-func (log *Log) PrintfOnErr(level int, fn func() error, format string, a ...interface{}) {
-	err := fn()
-	if err == nil { // all is ok
-		return
-	}
+// WarningOnError wraps printlnOnErr
+func (log *Log) WarningOnError(fn func() error, a ...interface{}) {
+	log.printlnOnError(WARNING, fn, a...)
+}
 
-	a = append(a, err)
-	format += ": %v"
-	log.println(level, fmt.Sprintf(format, a))
+// ErrorOnError wraps printlnOnErr
+func (log *Log) ErrorOnError(fn func() error, a ...interface{}) {
+	log.printlnOnError(ERROR, fn, a...)
 }
 
 // Trace logging a performance each function (simple profiler), usage defer trace("Message")()
@@ -237,4 +234,10 @@ func (log *Log) terminate(level int, msg string) {
 	case CRITICAL:
 		os.Exit(1)
 	}
+}
+
+// Configurer represents config object interface
+type Configurer interface {
+	LogFileValue() string
+	LogLevelValue() int
 }
