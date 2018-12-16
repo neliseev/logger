@@ -54,10 +54,10 @@ type Log struct {
 //     panic(err)
 //   }
 // }
-func New(cfg Configurer) (Log, error) {
+func New(cfg Configurer) (*Log, error) {
 	level := cfg.LogLevelValue()
 	if level > 8 { // validate func parameter
-		return Log{}, fmt.Errorf("incorrect log level, should be from 0 to 8, got: %v", level)
+		return nil, fmt.Errorf("incorrect log level, should be from 0 to 8, got: %v", level)
 	}
 
 	var (
@@ -82,13 +82,13 @@ func New(cfg Configurer) (Log, error) {
 			fd, err = os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0640)
 		}
 		if err != nil {
-			return Log{}, err
+			return nil, err
 		}
 		logDestination = fd
 		logDestinationErr = fd
 	}
 
-	logger := Log{
+	logger := &Log{
 		init:  true,
 		fd:    fd,
 		level: level,
@@ -113,22 +113,31 @@ func (log *Log) Close() {
 	if log.fd == nil {
 		return
 	}
-	log.fd.Close()
+
+	if warn := log.fd.Close(); warn != nil {
+		log.println(WARNING, warn)
+	}
 }
 
 // Emergency wraps println
 func (log *Log) Emergency(a ...interface{}) {
 	log.println(EMERGENCY, a...)
+
+	panic(fmt.Sprintln(a...))
 }
 
 // Alert wraps println
 func (log *Log) Alert(a ...interface{}) {
 	log.println(ALERT, a...)
+
+	os.Exit(2)
 }
 
 // Critical wraps println
 func (log *Log) Critical(a ...interface{}) {
 	log.println(CRITICAL, a...)
+
+	os.Exit(1)
 }
 
 // Error wraps println
@@ -168,8 +177,6 @@ func (log *Log) println(level int, a ...interface{}) {
 		return
 	}
 	log.d[level].Println(a...) // write message
-
-	log.terminate(level, fmt.Sprintln(a...)) // terminate if needed
 }
 
 // printlnOnError is a function wrap helper;
@@ -198,7 +205,7 @@ func (log *Log) ErrorOnError(fn func() error, a ...interface{}) {
 
 // Trace logging a performance each function (simple profiler), usage defer trace("Message")()
 func (log *Log) Trace(msg string) func() {
-	if log.level < TRACE { // suppress event
+	if log.level < TRACE { // supress event
 		return func() {}
 	}
 
@@ -218,22 +225,16 @@ func (log *Log) GetPtr(level int) (*log.Logger, error) {
 	if level < EMERGENCY || level > TRACE {
 		level = INFO // use INFO as default fallback
 	}
-	if level > log.level { // suppress event
+	if level > log.level { // supress event
 		return nil, fmt.Errorf("current loglevel: %d, got: %d", log.level, level)
 	}
 	return log.d[level], nil
 }
 
-// handle terminate behavior according to specified logging level
-func (log *Log) terminate(level int, msg string) {
-	switch level {
-	case EMERGENCY:
-		panic(msg)
-	case ALERT:
-		os.Exit(2)
-	case CRITICAL:
-		os.Exit(1)
-	}
+// Configurer represents config object interface
+type Configurer interface {
+	LogFileValue() string
+	LogLevelValue() int
 }
 
 // Configurer represents config object interface
