@@ -236,9 +236,3 @@ type Configurer interface {
 	LogFileValue() string
 	LogLevelValue() int
 }
-
-// Configurer represents config object interface
-type Configurer interface {
-	LogFileValue() string
-	LogLevelValue() int
-}
