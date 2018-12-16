@@ -54,9 +54,10 @@ type Log struct {
 //     panic(err)
 //   }
 // }
-func New(filePath string, level int) (Log, error) {
+func New(cfg Configurer) (*Log, error) {
+	level := cfg.LogLevelValue()
 	if level > 8 { // validate func parameter
-		return Log{}, fmt.Errorf("incorrect log level, should be from 0 to 8, got: %v", level)
+		return nil, fmt.Errorf("incorrect log level, should be from 0 to 8, got: %v", level)
 	}
 
 	var (
@@ -65,6 +66,7 @@ func New(filePath string, level int) (Log, error) {
 		fd                *os.File
 	)
 
+	filePath := cfg.LogFileValue()
 	if filePath == "" { // default destinations for logging; write to std out/err
 		logDestination = os.Stdout
 		logDestinationErr = os.Stderr
@@ -80,26 +82,26 @@ func New(filePath string, level int) (Log, error) {
 			fd, err = os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0640)
 		}
 		if err != nil {
-			return Log{}, err
+			return nil, err
 		}
 		logDestination = fd
 		logDestinationErr = fd
 	}
 
-	logger := Log{
+	logger := &Log{
 		init:  true,
 		fd:    fd,
 		level: level,
 		d: map[int]*log.Logger{
-			EMERGENCY: log.New(logDestinationErr, "Emergency: ", log.Ldate|log.Ltime|log.Lshortfile),
-			ALERT:     log.New(logDestinationErr, "Alert: ", log.Ldate|log.Ltime|log.Lshortfile),
-			CRITICAL:  log.New(logDestinationErr, "Critical: ", log.Ldate|log.Ltime|log.Lshortfile),
-			ERROR:     log.New(logDestinationErr, "Error: ", log.Ldate|log.Ltime|log.Lshortfile),
+			EMERGENCY: log.New(logDestinationErr, "Emergency: ", log.Ldate|log.Ltime),
+			ALERT:     log.New(logDestinationErr, "Alert: ", log.Ldate|log.Ltime),
+			CRITICAL:  log.New(logDestinationErr, "Critical: ", log.Ldate|log.Ltime),
+			ERROR:     log.New(logDestinationErr, "Error: ", log.Ldate|log.Ltime),
 			WARNING:   log.New(logDestination, "Warning: ", log.Ldate|log.Ltime),
 			NOTICE:    log.New(logDestination, "Notice: ", log.Ldate|log.Ltime),
 			INFO:      log.New(logDestination, "Info: ", log.Ldate|log.Ltime),
-			DEBUG:     log.New(logDestination, "Debug: ", log.Ldate|log.Ltime|log.Lshortfile),
-			TRACE:     log.New(logDestination, "Trace: ", log.Ldate|log.Ltime|log.Lshortfile),
+			DEBUG:     log.New(logDestination, "Debug: ", log.Ldate|log.Ltime),
+			TRACE:     log.New(logDestination, "Trace: ", log.Ldate|log.Ltime),
 		},
 	}
 
@@ -111,22 +113,31 @@ func (log *Log) Close() {
 	if log.fd == nil {
 		return
 	}
-	log.fd.Close()
+
+	if warn := log.fd.Close(); warn != nil {
+		log.println(WARNING, warn)
+	}
 }
 
 // Emergency wraps println
 func (log *Log) Emergency(a ...interface{}) {
 	log.println(EMERGENCY, a...)
+
+	panic(fmt.Sprintln(a...))
 }
 
 // Alert wraps println
 func (log *Log) Alert(a ...interface{}) {
 	log.println(ALERT, a...)
+
+	os.Exit(2)
 }
 
 // Critical wraps println
 func (log *Log) Critical(a ...interface{}) {
 	log.println(CRITICAL, a...)
+
+	os.Exit(1)
 }
 
 // Error wraps println
@@ -166,15 +177,13 @@ func (log *Log) println(level int, a ...interface{}) {
 		return
 	}
 	log.d[level].Println(a...) // write message
-
-	log.terminate(level, fmt.Sprintln(a...)) // terminate if needed
 }
 
-// PrintlnOnErr is a function wrap helper;
+// printlnOnError is a function wrap helper;
 // it takes a function that can return an error and additional error description
 // if wrapped function return an error we write a message describes event
-// and handle behavior according to specified logging level further
-func (log *Log) PrintlnOnErr(level int, fn func() error, a ...interface{}) {
+// and handle behavior accodring to specified logging level further
+func (log *Log) printlnOnError(level int, fn func() error, a ...interface{}) {
 	err := fn()
 	if err == nil { // all is ok
 		return
@@ -184,24 +193,19 @@ func (log *Log) PrintlnOnErr(level int, fn func() error, a ...interface{}) {
 	log.println(level, a)
 }
 
-// PrintfOnErr is a function wrap helper;
-// it takes a function that can return an error and additional error description
-// if wrapped function return an error we write a message describes event
-// and handle behavior according to specified logging level further
-func (log *Log) PrintfOnErr(level int, fn func() error, format string, a ...interface{}) {
-	err := fn()
-	if err == nil { // all is ok
-		return
-	}
+// WarningOnError wraps printlnOnErr
+func (log *Log) WarningOnError(fn func() error, a ...interface{}) {
+	log.printlnOnError(WARNING, fn, a...)
+}
 
-	a = append(a, err)
-	format += ": %v"
-	log.println(level, fmt.Sprintf(format, a))
+// ErrorOnError wraps printlnOnErr
+func (log *Log) ErrorOnError(fn func() error, a ...interface{}) {
+	log.printlnOnError(ERROR, fn, a...)
 }
 
 // Trace logging a performance each function (simple profiler), usage defer trace("Message")()
 func (log *Log) Trace(msg string) func() {
-	if log.level < TRACE { // suppress event
+	if log.level < TRACE { // supress event
 		return func() {}
 	}
 
@@ -221,20 +225,14 @@ func (log *Log) GetPtr(level int) (*log.Logger, error) {
 	if level < EMERGENCY || level > TRACE {
 		level = INFO // use INFO as default fallback
 	}
-	if level > log.level { // suppress event
+	if level > log.level { // supress event
 		return nil, fmt.Errorf("current loglevel: %d, got: %d", log.level, level)
 	}
 	return log.d[level], nil
 }
 
-// handle terminate behavior according to specified logging level
-func (log *Log) terminate(level int, msg string) {
-	switch level {
-	case EMERGENCY:
-		panic(msg)
-	case ALERT:
-		os.Exit(2)
-	case CRITICAL:
-		os.Exit(1)
-	}
+// Configurer represents config object interface
+type Configurer interface {
+	LogFileValue() string
+	LogLevelValue() int
 }
