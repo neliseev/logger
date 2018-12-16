@@ -173,7 +173,7 @@ func (log *Log) println(level int, a ...interface{}) {
 	if level < EMERGENCY || level > TRACE {
 		level = INFO // use INFO as default fallback
 	}
-	if level > log.level { // supress event
+	if level > log.level { // suppress event
 		return
 	}
 	log.d[level].Println(a...) // write message
@@ -229,6 +229,12 @@ func (log *Log) GetPtr(level int) (*log.Logger, error) {
 		return nil, fmt.Errorf("current loglevel: %d, got: %d", log.level, level)
 	}
 	return log.d[level], nil
+}
+
+// Configurer represents config object interface
+type Configurer interface {
+	LogFileValue() string
+	LogLevelValue() int
 }
 
 // Configurer represents config object interface
