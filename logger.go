@@ -55,7 +55,7 @@ type Log struct {
 //   }
 // }
 func New(cfg Configurer) (*Log, error) {
-	level := cfg.LogLevelValue()
+	level := cfg.LogLevel()
 	if level > 8 { // validate func parameter
 		return nil, fmt.Errorf("incorrect log level, should be from 0 to 8, got: %v", level)
 	}
@@ -66,7 +66,7 @@ func New(cfg Configurer) (*Log, error) {
 		fd                *os.File
 	)
 
-	filePath := cfg.LogFileValue()
+	filePath := cfg.LogFile()
 	if filePath == "" { // default destinations for logging; write to std out/err
 		logDestination = os.Stdout
 		logDestinationErr = os.Stderr
@@ -233,6 +233,6 @@ func (log *Log) GetPtr(level int) (*log.Logger, error) {
 
 // Configurer represents config object interface
 type Configurer interface {
-	LogFileValue() string
-	LogLevelValue() int
+	LogFile() string
+	LogLevel() int
 }
