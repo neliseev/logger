@@ -107,8 +107,8 @@ type promtailMsg struct {
 //   }
 // }
 func New(cfg Configurer) (Logger, error) {
-	if cfg.LogLevel() > 7 || cfg.LogLevel() < 3 { // validate func parameter
-		return nil, fmt.Errorf("incorrect log level, should be between 3 (ERROR) and 7 (DEBUG), got: %v", cfg.LogLevel())
+	if level > 8 { // validate func parameter
+		return nil, fmt.Errorf("incorrect log level, should be from 0 to 8, got: %v", level)
 	}
 
 	var (
