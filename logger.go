@@ -23,6 +23,7 @@ const (
 	NOTICE               // 5
 	INFO                 // 6
 	DEBUG                // 7
+	TRACE                // 8
 )
 
 var levels = map[int]string{
@@ -34,6 +35,7 @@ var levels = map[int]string{
 	5: "NOTICE",
 	6: "INFO",
 	7: "DEBUG",
+	8: "TRACE",
 }
 
 const logEntriesChanSize = 5000
@@ -55,6 +57,8 @@ type Logger interface {
 	Infof(format string, a ...interface{})
 	Debug(a ...interface{})
 	Debugf(format string, a ...interface{})
+	Trace(a ...interface{})
+	Tracef(format string, a ...interface{})
 	Close()
 }
 
@@ -97,6 +101,7 @@ type promtailMsg struct {
 //     5 - Notice.
 //     6 - Info.
 //     7 - Debug.
+//     8 - Trace.
 //
 // func main() {
 //   // initialization application log system
@@ -107,8 +112,8 @@ type promtailMsg struct {
 //   }
 // }
 func New(cfg Configurer) (Logger, error) {
-	if cfg.LogLevel() > 8 { // validate func parameter
-		return nil, fmt.Errorf("incorrect log level, should be from 0 to 8, got: %v", cfg.LogLevel())
+	if cfg.LogLevel() > 9 { // validate func parameter
+		return nil, fmt.Errorf("incorrect log level, should be from 0 to 9, got: %v", cfg.LogLevel())
 	}
 
 	var (
@@ -150,6 +155,7 @@ func New(cfg Configurer) (Logger, error) {
 			NOTICE:    log.New(msgOutput, "Notice: ", log.Ldate|log.Ltime),
 			INFO:      log.New(msgOutput, "Info: ", log.Ldate|log.Ltime),
 			DEBUG:     log.New(msgOutput, "Debug: ", log.Ldate|log.Ltime),
+			TRACE:     log.New(msgOutput, "Trace: ", log.Ldate|log.Ltime),
 		},
 	}
 
@@ -343,6 +349,16 @@ func (log *Log) Debug(a ...interface{}) {
 // Debugf wraps formatted Notice
 func (log *Log) Debugf(format string, a ...interface{}) {
 	log.Debug(fmt.Sprintf(format, a...))
+}
+
+// Debug wraps println
+func (log *Log) Trace(a ...interface{}) {
+	log.println(DEBUG, a...)
+}
+
+// Debugf wraps formatted Notice
+func (log *Log) Tracef(format string, a ...interface{}) {
+	log.Trace(fmt.Sprintf(format, a...))
 }
 
 // Close the log file if used
