@@ -353,7 +353,7 @@ func (log *Log) Debugf(format string, a ...interface{}) {
 
 // Debug wraps println
 func (log *Log) Trace(a ...interface{}) {
-	log.println(DEBUG, a...)
+	log.println(TRACE, a...)
 }
 
 // Debugf wraps formatted Notice
