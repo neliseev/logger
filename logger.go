@@ -358,7 +358,7 @@ func (log *Log) Trace(a ...interface{}) {
 
 // Debugf wraps formatted Notice
 func (log *Log) Tracef(format string, a ...interface{}) {
-	log.Trace(fmt.Sprintf(format, a...))
+	log.printf(TRACE, format, a...)
 }
 
 // Close the log file if used
