@@ -268,7 +268,7 @@ func (log *Log) Emergency(a ...interface{}) {
 
 // Emergencyf wraps formatted Error
 func (log *Log) Emergencyf(format string, a ...interface{}) {
-	log.printf(EMERGENCY, format, a...)
+	log.Emergency(fmt.Sprintf(format, a...))
 }
 
 // Alert wraps println
@@ -280,9 +280,7 @@ func (log *Log) Alert(a ...interface{}) {
 
 // Alertf wraps formatted Error
 func (log *Log) Alertf(format string, a ...interface{}) {
-	log.printf(ALERT, format, a...)
-
-	os.Exit(2)
+	log.Alert(fmt.Sprintf(format, a...))
 }
 
 // Critical wraps println
@@ -294,9 +292,7 @@ func (log *Log) Critical(a ...interface{}) {
 
 // Criticalf wraps formatted Error
 func (log *Log) Criticalf(format string, a ...interface{}) {
-	log.printf(CRITICAL, format, a...)
-
-	os.Exit(1)
+	log.Critical(fmt.Sprintf(format, a...))
 }
 
 // Error wraps println
@@ -370,7 +366,7 @@ func (log *Log) printf(level int, format string, a ...interface{}) {
 		return
 	}
 
-	log.println(level, fmt.Sprintf(format, a...)) // write message
+	log.output(level, fmt.Sprintf(format, a...))
 }
 
 // println a message using specified logging level
@@ -379,7 +375,11 @@ func (log *Log) println(level int, a ...interface{}) {
 		return
 	}
 
-	log.d[level].Println(a...) // write message
+	log.output(level, fmt.Sprint(a...))
+}
+
+func (log *Log) output(level int, a string) {
+	log.d[level].Println(a) // write message
 
 	if log.cfg.LokiPushURL() != "" && log.cfg.LokiSendLevel() <= level {
 		line := fmt.Sprintf("%s: %s", levels[level], a)
