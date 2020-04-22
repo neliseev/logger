@@ -268,7 +268,7 @@ func (log *Log) Emergency(a ...interface{}) {
 
 // Emergencyf wraps formatted Error
 func (log *Log) Emergencyf(format string, a ...interface{}) {
-	log.Emergency(fmt.Sprintf(format, a...))
+	log.printf(EMERGENCY, format, a...)
 }
 
 // Alert wraps println
@@ -280,7 +280,9 @@ func (log *Log) Alert(a ...interface{}) {
 
 // Alertf wraps formatted Error
 func (log *Log) Alertf(format string, a ...interface{}) {
-	log.Alert(fmt.Sprintf(format, a...))
+	log.printf(ALERT, format, a...)
+
+	os.Exit(2)
 }
 
 // Critical wraps println
@@ -292,7 +294,9 @@ func (log *Log) Critical(a ...interface{}) {
 
 // Criticalf wraps formatted Error
 func (log *Log) Criticalf(format string, a ...interface{}) {
-	log.Critical(fmt.Sprintf(format, a...))
+	log.printf(CRITICAL, format, a...)
+
+	os.Exit(1)
 }
 
 // Error wraps println
@@ -302,7 +306,7 @@ func (log *Log) Error(a ...interface{}) {
 
 // Errorf wraps formatted Error
 func (log *Log) Errorf(format string, a ...interface{}) {
-	log.Error(fmt.Sprintf(format, a...))
+	log.printf(ERROR, format, a...)
 }
 
 // Warning wraps println
@@ -312,7 +316,7 @@ func (log *Log) Warning(a ...interface{}) {
 
 // Warningf wraps formatted Warning
 func (log *Log) Warningf(format string, a ...interface{}) {
-	log.Warning(fmt.Sprintf(format, a...))
+	log.printf(WARNING, format, a...)
 }
 
 // Notice wraps println
@@ -322,7 +326,7 @@ func (log *Log) Notice(a ...interface{}) {
 
 // Noticef wraps formatted Notice
 func (log *Log) Noticef(format string, a ...interface{}) {
-	log.Notice(fmt.Sprintf(format, a...))
+	log.printf(NOTICE, format, a...)
 }
 
 // Info wraps println
@@ -332,7 +336,7 @@ func (log *Log) Info(a ...interface{}) {
 
 // Infof wraps formatted Notice
 func (log *Log) Infof(format string, a ...interface{}) {
-	log.Info(fmt.Sprintf(format, a...))
+	log.printf(INFO, format, a...)
 }
 
 // Debug wraps println
@@ -342,7 +346,7 @@ func (log *Log) Debug(a ...interface{}) {
 
 // Debugf wraps formatted Notice
 func (log *Log) Debugf(format string, a ...interface{}) {
-	log.Debug(fmt.Sprintf(format, a...))
+	log.printf(DEBUG, format, a...)
 }
 
 // Close the log file if used
@@ -359,6 +363,14 @@ func (log *Log) Close() {
 		close(log.quit)
 		log.waitGroup.Wait()
 	}
+}
+
+func (log *Log) printf(level int, format string, a ...interface{}) {
+	if level > log.cfg.LogLevel() { // suppress event
+		return
+	}
+
+	log.println(level, fmt.Sprintf(format, a...)) // write message
 }
 
 // println a message using specified logging level
